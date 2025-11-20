@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.teambind'
 version = '0.0.1-SNAPSHOT'
-description = 'springProject'
+description = 'toss-payment-service-server'
 
 java {
     toolchain {
