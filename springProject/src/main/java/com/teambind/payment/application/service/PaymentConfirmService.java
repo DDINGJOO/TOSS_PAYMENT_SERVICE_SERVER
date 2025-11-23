@@ -5,6 +5,8 @@ import com.teambind.payment.adapter.out.toss.dto.TossPaymentConfirmRequest;
 import com.teambind.payment.adapter.out.toss.dto.TossPaymentConfirmResponse;
 import com.teambind.payment.application.port.out.PaymentRepository;
 import com.teambind.payment.application.port.out.TossPaymentClient;
+import com.teambind.payment.common.exception.PaymentException;
+import com.teambind.payment.common.exception.TossApiException;
 import com.teambind.payment.domain.Money;
 import com.teambind.payment.domain.Payment;
 import com.teambind.payment.domain.PaymentMethod;
@@ -28,7 +30,7 @@ public class PaymentConfirmService {
 
         // 1. Payment 조회
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다: " + paymentId));
+                .orElseThrow(() -> PaymentException.notFound(paymentId));
 
         // 2. 금액 검증
         payment.validateAmount(Money.of(amount));
