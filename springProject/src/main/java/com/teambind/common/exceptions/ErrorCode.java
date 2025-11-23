@@ -1,4 +1,4 @@
-package com.teambind.springproject.common.exceptions;
+package com.teambind.common.exceptions;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

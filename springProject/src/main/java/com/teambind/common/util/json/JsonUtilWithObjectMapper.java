@@ -1,4 +1,4 @@
-package com.teambind.springproject.common.util.json;
+package com.teambind.common.util.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
