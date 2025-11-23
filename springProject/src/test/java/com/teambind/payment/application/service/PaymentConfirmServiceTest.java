@@ -4,6 +4,7 @@ import com.teambind.payment.adapter.out.toss.dto.TossPaymentConfirmRequest;
 import com.teambind.payment.adapter.out.toss.dto.TossPaymentConfirmResponse;
 import com.teambind.payment.application.port.out.PaymentRepository;
 import com.teambind.payment.application.port.out.TossPaymentClient;
+import com.teambind.payment.common.exception.PaymentException;
 import com.teambind.payment.domain.Money;
 import com.teambind.payment.domain.Payment;
 import com.teambind.payment.domain.PaymentMethod;
@@ -150,8 +151,8 @@ class PaymentConfirmServiceTest {
         assertThatThrownBy(() -> paymentConfirmService.confirmPayment(
                 paymentId, "order-123", "payment-key-123", 100000L
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("결제 정보를 찾을 수 없습니다");
+                .isInstanceOf(PaymentException.class)
+                .hasMessageContaining("Payment not found");
 
         verify(paymentRepository).findById(paymentId);
         verify(tossPaymentClient, never()).confirmPayment(any());

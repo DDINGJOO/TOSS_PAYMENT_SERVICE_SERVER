@@ -5,6 +5,8 @@ import com.teambind.payment.adapter.out.toss.dto.TossRefundResponse;
 import com.teambind.payment.application.port.out.PaymentRepository;
 import com.teambind.payment.application.port.out.RefundRepository;
 import com.teambind.payment.application.port.out.TossRefundClient;
+import com.teambind.payment.common.exception.PaymentException;
+import com.teambind.payment.common.exception.RefundException;
 import com.teambind.payment.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -131,8 +133,8 @@ class RefundServiceTest {
 
         // when & then
         assertThatThrownBy(() -> refundService.processRefund(paymentId, "고객 요청"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("결제 정보를 찾을 수 없습니다");
+                .isInstanceOf(PaymentException.class)
+                .hasMessageContaining("Payment not found");
 
         verify(paymentRepository).findById(paymentId);
         verify(refundRepository, never()).save(any());
@@ -168,8 +170,8 @@ class RefundServiceTest {
 
         // when & then
         assertThatThrownBy(() -> refundService.processRefund(paymentId, "고객 요청"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("환불 처리 중 오류가 발생했습니다");
+                .isInstanceOf(RefundException.class)
+                .hasMessageContaining("Refund processing failed");
 
         verify(refundRepository, times(2)).save(any(Refund.class));
     }
