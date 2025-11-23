@@ -63,5 +63,7 @@ reservation:
 
 kafka:
   topics:
-    reservation-events: reservation-events
-    payment-events: payment-events
+    reservation-confirmed: reservation-confirmed
+    payment-completed: payment-completed
+    payment-cancelled: payment-cancelled
+    refund-completed: refund-completed
