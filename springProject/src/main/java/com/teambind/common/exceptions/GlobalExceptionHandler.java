@@ -1,4 +1,4 @@
-package com.teambind.springproject.common.exceptions;
+package com.teambind.common.exceptions;
 
 
 import jakarta.servlet.http.HttpServletRequest;
