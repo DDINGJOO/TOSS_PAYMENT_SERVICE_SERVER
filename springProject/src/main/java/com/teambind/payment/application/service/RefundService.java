@@ -7,6 +7,9 @@ import com.teambind.payment.adapter.out.toss.dto.TossRefundResponse;
 import com.teambind.payment.application.port.out.PaymentRepository;
 import com.teambind.payment.application.port.out.RefundRepository;
 import com.teambind.payment.application.port.out.TossRefundClient;
+import com.teambind.payment.common.exception.PaymentException;
+import com.teambind.payment.common.exception.RefundException;
+import com.teambind.payment.common.exception.TossApiException;
 import com.teambind.payment.domain.Money;
 import com.teambind.payment.domain.Payment;
 import com.teambind.payment.domain.Refund;
@@ -34,7 +37,7 @@ public class RefundService {
 
         // 1. Payment 조회 및 환불 가능 여부 확인
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다: " + paymentId));
+                .orElseThrow(() -> PaymentException.notFound(paymentId));
 
         payment.validateRefundable();
 
@@ -85,7 +88,11 @@ public class RefundService {
             log.error("환불 처리 실패 - paymentId: {}, error: {}", paymentId, e.getMessage(), e);
             refund.fail(e.getMessage());
             refundRepository.save(refund);
-            throw new RuntimeException("환불 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
+            throw new RefundException(
+                    com.teambind.common.exceptions.ErrorCode.REFUND_PROCESSING_FAILED,
+                    "Refund processing failed for payment: " + paymentId,
+                    e
+            );
         }
     }
 }
