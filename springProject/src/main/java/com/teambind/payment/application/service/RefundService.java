@@ -95,4 +95,12 @@ public class RefundService {
             );
         }
     }
+
+    @Transactional(readOnly = true)
+    public Refund getRefund(String refundId) {
+        log.info("환불 조회 - refundId: {}", refundId);
+
+        return refundRepository.findById(refundId)
+                .orElseThrow(() -> RefundException.notFound(refundId));
+    }
 }

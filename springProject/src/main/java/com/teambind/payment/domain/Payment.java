@@ -186,8 +186,9 @@ public class Payment {
         if (checkInDate == null) {
             throw new IllegalArgumentException("Check-in date는 필수입니다");
         }
-        if (checkInDate.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Check-in date는 현재 시각 이후여야 합니다");
+        // 당일 예약을 허용하기 위해 약간의 tolerance를 둠 (5초)
+        if (checkInDate.isBefore(LocalDateTime.now().minusSeconds(5))) {
+            throw new IllegalArgumentException("Check-in date는 과거일 수 없습니다");
         }
     }
 

@@ -26,56 +26,32 @@ public class RefundController {
         log.info("환불 요청 수신 - paymentId: {}, reason: {}",
                 request.paymentId(), request.reason());
 
-        try {
-            Refund refund = refundService.processRefund(
-                    request.paymentId(),
-                    request.reason()
-            );
+        Refund refund = refundService.processRefund(
+                request.paymentId(),
+                request.reason()
+        );
 
-            RefundResponse response = RefundResponse.from(refund);
-            log.info("환불 요청 응답 반환 - refundId: {}, status: {}, refundAmount: {}",
-                    response.refundId(), response.status(), response.refundAmount());
+        RefundResponse response = RefundResponse.from(refund);
+        log.info("환불 요청 응답 반환 - refundId: {}, status: {}, refundAmount: {}",
+                response.refundId(), response.status(), response.refundAmount());
 
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            log.error("환불 요청 실패 (잘못된 요청) - paymentId: {}, error: {}",
-                    request.paymentId(), e.getMessage());
-            throw e;
-
-        } catch (IllegalStateException e) {
-            log.error("환불 요청 실패 (상태 오류) - paymentId: {}, error: {}",
-                    request.paymentId(), e.getMessage());
-            throw e;
-
-        } catch (Exception e) {
-            log.error("환불 요청 실패 (서버 오류) - paymentId: {}, error: {}",
-                    request.paymentId(), e.getMessage(), e);
-            throw new RuntimeException("환불 처리 중 오류가 발생했습니다", e);
-        }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
-    }
+    @GetMapping("/{refundId}")
+    public ResponseEntity<RefundResponse> getRefund(
+            @PathVariable String refundId
+    ) {
+        log.info("환불 조회 요청 수신 - refundId: {}", refundId);
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException e) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("INTERNAL_SERVER_ERROR", e.getMessage()));
-    }
+        Refund refund = refundService.getRefund(refundId);
 
-    private record ErrorResponse(String code, String message) {
+        RefundResponse response = RefundResponse.from(refund);
+        log.info("환불 조회 응답 반환 - refundId: {}, status: {}, refundAmount: {}",
+                response.refundId(), response.status(), response.refundAmount());
+
+        return ResponseEntity.ok(response);
     }
 }

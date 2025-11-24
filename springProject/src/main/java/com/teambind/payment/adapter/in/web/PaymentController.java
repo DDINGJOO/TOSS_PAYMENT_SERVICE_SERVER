@@ -1,8 +1,9 @@
 package com.teambind.payment.adapter.in.web;
 
-import com.teambind.payment.adapter.in.web.dto.PaymentConfirmRequest;
-import com.teambind.payment.adapter.in.web.dto.PaymentConfirmResponse;
+import com.teambind.payment.adapter.in.web.dto.*;
+import com.teambind.payment.application.service.PaymentCancelService;
 import com.teambind.payment.application.service.PaymentConfirmService;
+import com.teambind.payment.application.service.PaymentPrepareService;
 import com.teambind.payment.domain.Payment;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,31 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class PaymentController {
 
+    private final PaymentPrepareService paymentPrepareService;
     private final PaymentConfirmService paymentConfirmService;
+    private final PaymentCancelService paymentCancelService;
+
+    @PostMapping
+    public ResponseEntity<PaymentPrepareResponse> preparePayment(
+            @Valid @RequestBody PaymentPrepareRequest request
+    ) {
+        log.info("결제 준비 요청 수신 - reservationId: {}, amount: {}, checkInDate: {}",
+                request.reservationId(), request.amount(), request.checkInDate());
+
+        Payment payment = paymentPrepareService.preparePayment(
+                request.reservationId(),
+                request.amount(),
+                request.checkInDate()
+        );
+
+        PaymentPrepareResponse response = PaymentPrepareResponse.from(payment);
+        log.info("결제 준비 응답 반환 - paymentId: {}, status: {}",
+                response.paymentId(), response.status());
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
 
     @PostMapping("/confirm")
     public ResponseEntity<PaymentConfirmResponse> confirmPayment(
@@ -26,46 +51,52 @@ public class PaymentController {
         log.info("결제 승인 요청 수신 - paymentId: {}, orderId: {}, amount: {}",
                 request.paymentId(), request.orderId(), request.amount());
 
-        try {
-            Payment payment = paymentConfirmService.confirmPayment(
-                    request.paymentId(),
-                    request.orderId(),
-                    request.paymentKey(),
-                    request.amount()
-            );
+        Payment payment = paymentConfirmService.confirmPayment(
+                request.paymentId(),
+                request.orderId(),
+                request.paymentKey(),
+                request.amount()
+        );
 
-            PaymentConfirmResponse response = PaymentConfirmResponse.from(payment);
-            log.info("결제 승인 응답 반환 - paymentId: {}, status: {}",
-                    response.paymentId(), response.status());
+        PaymentConfirmResponse response = PaymentConfirmResponse.from(payment);
+        log.info("결제 승인 응답 반환 - paymentId: {}, status: {}",
+                response.paymentId(), response.status());
 
-            return ResponseEntity.ok(response);
-
-        } catch (IllegalArgumentException e) {
-            log.error("결제 승인 실패 (잘못된 요청) - paymentId: {}, error: {}",
-                    request.paymentId(), e.getMessage());
-            throw e;
-
-        } catch (Exception e) {
-            log.error("결제 승인 실패 (서버 오류) - paymentId: {}, error: {}",
-                    request.paymentId(), e.getMessage(), e);
-            throw new RuntimeException("결제 승인 처리 중 오류가 발생했습니다", e);
-        }
+        return ResponseEntity.ok(response);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
+    @PostMapping("/{paymentId}/cancel")
+    public ResponseEntity<PaymentCancelResponse> cancelPayment(
+            @PathVariable String paymentId,
+            @Valid @RequestBody PaymentCancelRequest request
+    ) {
+        log.info("결제 취소 요청 수신 - paymentId: {}, reason: {}",
+                paymentId, request.reason());
+
+        Payment payment = paymentCancelService.cancelPayment(
+                paymentId,
+                request.reason()
+        );
+
+        PaymentCancelResponse response = PaymentCancelResponse.from(payment);
+        log.info("결제 취소 응답 반환 - paymentId: {}, status: {}",
+                response.paymentId(), response.status());
+
+        return ResponseEntity.ok(response);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException e) {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("INTERNAL_SERVER_ERROR", e.getMessage()));
-    }
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<PaymentConfirmResponse> getPayment(
+            @PathVariable String paymentId
+    ) {
+        log.info("결제 조회 요청 수신 - paymentId: {}", paymentId);
 
-    private record ErrorResponse(String code, String message) {
+        Payment payment = paymentPrepareService.getPayment(paymentId);
+
+        PaymentConfirmResponse response = PaymentConfirmResponse.from(payment);
+        log.info("결제 조회 응답 반환 - paymentId: {}, status: {}",
+                response.paymentId(), response.status());
+
+        return ResponseEntity.ok(response);
     }
 }

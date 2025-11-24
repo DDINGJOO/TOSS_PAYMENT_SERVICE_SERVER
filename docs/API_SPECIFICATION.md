@@ -80,11 +80,11 @@ Toss Payment Service의 RESTful API 명세서입니다.
 
 ## 결제 API
 
-### 1. 결제 요청
+### 1. 결제 준비
 
 **Endpoint**: `POST /api/v1/payments`
 
-**설명**: 새로운 결제를 생성하고 Toss Payments API를 통해 승인 처리합니다.
+**설명**: 새로운 결제를 준비합니다. 예약 정보를 기반으로 결제 객체를 생성하며, Kafka 이벤트 또는 직접 API 호출 모두 지원합니다 (Dual Path).
 
 **Request Body**
 
@@ -92,42 +92,92 @@ Toss Payment Service의 RESTful API 명세서입니다.
 {
   "reservationId": "RSV-20251120-001",
   "amount": 50000,
-  "paymentMethod": "CARD",
-  "idempotencyKey": "unique-key-12345"
+  "checkInDate": "2025-11-25T15:00:00"
 }
 ```
 
 | 필드 | 타입 | 필수 | 설명 | 제약 조건 |
 |------|------|------|------|----------|
-| `reservationId` | String | ✅ | 예약 ID | 50자 이하 |
+| `reservationId` | String | ✅ | 예약 ID | 필수 |
 | `amount` | Number | ✅ | 결제 금액 (원) | 양수 |
-| `paymentMethod` | String | ✅ | 결제 수단 | `CARD`, `VIRTUAL_ACCOUNT`, `EASY_PAY` |
-| `idempotencyKey` | String | ✅ | 멱등성 키 | 100자 이하, 고유값 |
+| `checkInDate` | String | ✅ | 체크인 날짜/시각 | ISO-8601, 현재 또는 미래 |
 
 **Response (201 Created)**
 
 ```json
 {
-  "paymentId": "PAY-20251120-001",
+  "paymentId": "PAY-1A2B3C4D",
   "reservationId": "RSV-20251120-001",
   "amount": 50000,
-  "paymentMethod": "CARD",
+  "status": "PREPARED",
+  "checkInDate": "2025-11-25T15:00:00",
+  "idempotencyKey": "idempotency-key-auto-generated",
+  "createdAt": "2025-11-20T14:30:00"
+}
+```
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `paymentId` | String | 결제 ID (시스템 자동 생성) |
+| `reservationId` | String | 예약 ID |
+| `amount` | Number | 결제 금액 |
+| `status` | String | 결제 상태 (`PREPARED`) |
+| `checkInDate` | String | 체크인 날짜 (환불 정책 계산용) |
+| `idempotencyKey` | String | 자동 생성된 멱등성 키 |
+| `createdAt` | String | 결제 생성 시각 (ISO-8601) |
+
+---
+
+### 2. 결제 승인
+
+**Endpoint**: `POST /api/v1/payments/confirm`
+
+**설명**: Toss Payments 위젯에서 받은 정보로 결제를 승인합니다.
+
+**Request Body**
+
+```json
+{
+  "paymentId": "PAY-1A2B3C4D",
+  "orderId": "order-unique-id",
+  "paymentKey": "toss-payment-key-123",
+  "amount": 50000
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
+|------|------|------|------|----------|
+| `paymentId` | String | ✅ | 결제 ID | 필수 |
+| `orderId` | String | ✅ | Toss 주문 ID | 필수 |
+| `paymentKey` | String | ✅ | Toss 결제 키 | 필수 |
+| `amount` | Number | ✅ | 결제 금액 (원) | 양수, 준비된 금액과 일치 필요 |
+
+**Response (200 OK)**
+
+```json
+{
+  "paymentId": "PAY-1A2B3C4D",
+  "reservationId": "RSV-20251120-001",
+  "amount": 50000,
   "status": "COMPLETED",
-  "orderId": "TOSS-ORD-001",
-  "paymentKey": "TOSS-KEY-001",
+  "orderId": "order-unique-id",
+  "paymentKey": "toss-payment-key-123",
+  "transactionId": "toss-transaction-id",
+  "method": "CARD",
   "paidAt": "2025-11-20T14:30:00"
 }
 ```
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `paymentId` | String | 결제 ID (시스템 생성) |
+| `paymentId` | String | 결제 ID |
 | `reservationId` | String | 예약 ID |
 | `amount` | Number | 결제 금액 |
-| `paymentMethod` | String | 결제 수단 |
 | `status` | String | 결제 상태 (`COMPLETED`) |
 | `orderId` | String | Toss 주문 ID |
 | `paymentKey` | String | Toss 결제 키 |
+| `transactionId` | String | Toss 거래 ID |
+| `method` | String | 결제 수단 (`CARD`, `EASY_PAY`, `VIRTUAL_ACCOUNT`) |
 | `paidAt` | String | 결제 완료 시각 (ISO-8601) |
 
 **Error Responses**
@@ -232,7 +282,93 @@ curl -X POST http://localhost:8080/api/v1/payments \
 
 ---
 
-### 2. 결제 조회 (단건)
+### 3. 결제 취소
+
+**Endpoint**: `POST /api/v1/payments/{paymentId}/cancel`
+
+**설명**: 승인된 결제를 취소합니다. 취소된 결제는 환불 프로세스를 거쳐 처리됩니다.
+
+**Path Parameters**
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `paymentId` | String | ✅ | 결제 ID |
+
+**Request Body**
+
+```json
+{
+  "reason": "고객 요청에 의한 취소"
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
+|------|------|------|------|----------|
+| `reason` | String | ✅ | 취소 사유 | 필수 |
+
+**Response (200 OK)**
+
+```json
+{
+  "paymentId": "PAY-1A2B3C4D",
+  "reservationId": "RSV-20251120-001",
+  "status": "CANCELLED",
+  "cancelledAt": "2025-11-20T15:00:00"
+}
+```
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `paymentId` | String | 결제 ID |
+| `reservationId` | String | 예약 ID |
+| `status` | String | 결제 상태 (`CANCELLED`) |
+| `cancelledAt` | String | 취소 시각 (ISO-8601) |
+
+**Error Responses**
+
+**404 Not Found - 결제 없음**
+
+```json
+{
+  "errorCode": "PAYMENT_NOT_FOUND",
+  "message": "결제를 찾을 수 없습니다",
+  "details": {
+    "paymentId": "PAY-NOTFOUND"
+  },
+  "timestamp": "2025-11-20T15:00:00",
+  "path": "/api/v1/payments/PAY-NOTFOUND/cancel"
+}
+```
+
+**400 Bad Request - 취소 불가 상태**
+
+```json
+{
+  "errorCode": "INVALID_PAYMENT_STATE",
+  "message": "취소 가능한 상태가 아닙니다",
+  "details": {
+    "paymentId": "PAY-1A2B3C4D",
+    "currentStatus": "CANCELLED",
+    "reason": "이미 취소된 결제입니다"
+  },
+  "timestamp": "2025-11-20T15:00:00",
+  "path": "/api/v1/payments/PAY-1A2B3C4D/cancel"
+}
+```
+
+**cURL 예시**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/payments/PAY-1A2B3C4D/cancel \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "고객 요청에 의한 취소"
+  }'
+```
+
+---
+
+### 4. 결제 조회 (단건)
 
 **Endpoint**: `GET /api/v1/payments/{paymentId}`
 
@@ -297,40 +433,6 @@ curl -X GET http://localhost:8080/api/v1/payments/PAY-20251120-001
 ```
 
 ---
-
-### 3. 예약별 결제 조회
-
-**Endpoint**: `GET /api/v1/payments?reservationId={reservationId}`
-
-**설명**: 예약 ID로 결제 목록을 조회합니다.
-
-**Query Parameters**
-
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| `reservationId` | String | ✅ | 예약 ID |
-
-**Response (200 OK)**
-
-```json
-{
-  "payments": [
-    {
-      "paymentId": "PAY-20251120-001",
-      "amount": 50000,
-      "status": "COMPLETED",
-      "paidAt": "2025-11-20T14:30:00"
-    }
-  ],
-  "totalCount": 1
-}
-```
-
-**cURL 예시**
-
-```bash
-curl -X GET "http://localhost:8080/api/v1/payments?reservationId=RSV-20251120-001"
-```
 
 ---
 

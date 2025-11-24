@@ -1,6 +1,7 @@
 package com.teambind.payment.application.service;
 
 import com.teambind.payment.application.port.out.PaymentRepository;
+import com.teambind.payment.common.exception.PaymentException;
 import com.teambind.payment.domain.Money;
 import com.teambind.payment.domain.Payment;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +42,13 @@ public class PaymentPrepareService {
 
                     return savedPayment;
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public Payment getPayment(String paymentId) {
+        log.info("결제 조회 - paymentId: {}", paymentId);
+
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> PaymentException.notFound(paymentId));
     }
 }
