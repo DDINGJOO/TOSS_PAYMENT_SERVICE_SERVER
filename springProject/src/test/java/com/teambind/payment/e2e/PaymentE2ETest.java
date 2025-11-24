@@ -46,10 +46,10 @@ class PaymentE2ETest extends AbstractE2ETest {
         Map<String, Object> eventPayload = Map.of(
                 "reservationId", reservationId,
                 "amount", amount,
-                "checkInDate", checkInDate.toString()
+                "checkInDate", checkInDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
 
-        kafkaTemplate.send("reservation-confirmed-test", eventPayload);
+        kafkaTemplate.send("reservation-confirmed-test", eventPayload).get(); // Wait for message to be sent
 
         // When & Then 1: Payment PREPARED 상태로 저장 확인 (이벤트 컨슈머 처리 대기)
         await().atMost(10, TimeUnit.SECONDS)

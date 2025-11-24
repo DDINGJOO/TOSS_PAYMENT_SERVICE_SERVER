@@ -3,6 +3,8 @@ package com.teambind.payment.e2e;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,52 +12,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * E2E 테스트를 위한 베이스 클래스
- * - Testcontainers로 실제 MariaDB, Kafka 환경 구성
+ * - docker-compose로 실행된 MariaDB, Kafka 환경 사용
  * - WireMock으로 외부 API (Toss, Reservation Service) 모킹
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Testcontainers
 @ActiveProfiles("test")
 public abstract class AbstractE2ETest {
 
     @Autowired
     protected MockMvc mockMvc;
 
-    @Autowired
     protected KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
-
-    // Testcontainers
-    @Container
-    protected static final MariaDBContainer<?> mariaDB = new MariaDBContainer<>(
-            DockerImageName.parse("mariadb:11")
-    )
-            .withDatabaseName("payment_service_test")
-            .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);
-
-    @Container
-    protected static final KafkaContainer kafka = new KafkaContainer(
-            DockerImageName.parse("confluentinc/cp-kafka:7.5.0")
-    )
-            .withReuse(true);
 
     // WireMock Servers
     protected static WireMockServer tossApiServer;
@@ -83,38 +68,35 @@ public abstract class AbstractE2ETest {
         }
     }
 
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        // WireMock 동적 포트 설정
+        registry.add("toss.payments.api.base-url", () -> "http://localhost:" + tossApiServer.port());
+        registry.add("reservation.service.url", () -> "http://localhost:" + reservationServiceServer.port());
+    }
+
     @BeforeEach
     void setUp() {
+        // Kafka Producer 직접 생성 (docker-compose의 localhost:9092 사용)
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        props.put(ProducerConfig.RETRIES_CONFIG, 3);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+
+        ProducerFactory<String, Object> producerFactory = new DefaultKafkaProducerFactory<>(props);
+        kafkaTemplate = new KafkaTemplate<>(producerFactory);
+
         // WireMock 리셋
         tossApiServer.resetAll();
         reservationServiceServer.resetAll();
 
         // 데이터베이스 클린업
         cleanDatabase();
-    }
-
-    @DynamicPropertySource
-    static void overrideProperties(DynamicPropertyRegistry registry) {
-        // MariaDB 설정
-        registry.add("spring.datasource.url", mariaDB::getJdbcUrl);
-        registry.add("spring.datasource.username", mariaDB::getUsername);
-        registry.add("spring.datasource.password", mariaDB::getPassword);
-        registry.add("spring.datasource.driver-class-name", mariaDB::getDriverClassName);
-
-        // Kafka 설정
-        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("spring.kafka.producer.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("spring.kafka.consumer.bootstrap-servers", kafka::getBootstrapServers);
-
-        // Toss API Mock 서버
-        registry.add("toss.payments.api.base-url", () -> "http://localhost:" + tossApiServer.port());
-
-        // Reservation Service Mock 서버
-        registry.add("reservation.service.url", () -> "http://localhost:" + reservationServiceServer.port());
-
-        // Flyway 설정
-        registry.add("spring.flyway.enabled", () -> "true");
-        registry.add("spring.flyway.baseline-on-migrate", () -> "true");
     }
 
     /**
