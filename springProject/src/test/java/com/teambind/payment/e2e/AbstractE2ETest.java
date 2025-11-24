@@ -36,7 +36,7 @@ public abstract class AbstractE2ETest {
     protected MockMvc mockMvc;
 
     @Autowired
-    protected KafkaTemplate<String, String> kafkaTemplate;
+    protected KafkaTemplate<String, Object> kafkaTemplate;
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
