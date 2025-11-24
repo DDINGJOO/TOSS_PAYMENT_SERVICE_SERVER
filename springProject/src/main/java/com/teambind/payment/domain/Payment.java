@@ -20,8 +20,8 @@ public class Payment {
     @Column(name = "payment_id", length = 50)
     private String paymentId;
 
-    // 예약 ID
-    @Column(name = "reservation_id", nullable = false, length = 50)
+    // 예약 ID (Dual Path 멱등성 보장을 위한 unique 제약)
+    @Column(name = "reservation_id", nullable = false, length = 50, unique = true)
     private String reservationId;
 
     // 결제 금액
