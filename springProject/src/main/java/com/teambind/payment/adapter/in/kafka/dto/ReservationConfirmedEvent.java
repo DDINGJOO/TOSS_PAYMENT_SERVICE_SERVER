@@ -15,7 +15,6 @@ public record ReservationConfirmedEvent(
 
         // 체크인 날짜
         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime checkInDate
 ) {
 }
