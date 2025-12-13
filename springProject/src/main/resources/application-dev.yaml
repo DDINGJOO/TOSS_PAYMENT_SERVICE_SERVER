@@ -52,8 +52,8 @@ spring:
 toss:
   payments:
     api:
-      base-url: ${TOSS_API_BASE_URL:https://api.tosspayments.com}
-      secret-key: ${TOSS_API_SECRET_KEY:test_sk_secret_key}
+      base-url: ${TOSS_API_BASE_URL}
+      secret-key: ${TOSS_API_SECRET_KEY}
       timeout: 5000
 
 reservation:
@@ -63,7 +63,7 @@ reservation:
 
 kafka:
   topics:
-    reservation-confirmed: reservation-confirmed
+    reservation-confirmed: complete-reservation-info
     payment-completed: payment-completed
     payment-cancelled: payment-cancelled
     refund-completed: refund-completed
