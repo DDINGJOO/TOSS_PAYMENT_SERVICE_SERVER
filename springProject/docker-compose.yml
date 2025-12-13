@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  toss-payment-service:
+    container_name: toss-payment-service
+    image: ddingsh9/toss-server:latest
+    networks:
+      - infra-network
+    environment:
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=prod
+
+      # Server Port
+      - SERVER_PORT=8080
+
+      # Kafka Configuration (infra-network 내부 호스트명 사용)
+      - KAFKA_URL=kafka1:9091,kafka2:9092,kafka3:9093
+
+      # Kafka Topics
+      - KAFKA_TOPICS_RESERVATION_CONFIRMED=complete-reservation-info
+      - KAFKA_TOPICS_PAYMENT_COMPLETED=payment-completed
+      - KAFKA_TOPICS_PAYMENT_CANCELLED=payment-cancelled
+      - KAFKA_TOPICS_REFUND_COMPLETED=refund-completed
+
+      # MariaDB Configuration
+      - DATABASE_HOST=toss-mariadb
+      - DATABASE_PORT=3306
+      - DATABASE_USER_NAME=tossuser
+      - DATABASE_PASSWORD=tosspass123
+
+      # Toss API Configuration
+      - TOSS_API_BASE_URL=https://api.tosspayments.com
+      - TOSS_API_SECRET_KEY=${TOSS_API_SECRET_KEY}
+
+      # Reservation Service
+      - RESERVATION_SERVICE_URL=http://ye-yak-manager-service:8080
+
+      # Logging
+      - LOG_LEVEL=INFO
+    depends_on:
+      toss-mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  toss-mariadb:
+    container_name: toss-mariadb
+    image: mariadb:10.11
+    networks:
+      - infra-network
+    ports:
+      - "13306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass123
+      - MYSQL_DATABASE=payment_service
+      - MYSQL_USER=tossuser
+      - MYSQL_PASSWORD=tosspass123
+      - TZ=Asia/Seoul
+    volumes:
+      - toss-mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  nginx:
+    container_name: toss-payment-nginx
+    image: nginx:alpine
+    ports:
+      - "9418:80"
+    networks:
+      - infra-network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - toss-payment-service
+    restart: unless-stopped
+
+volumes:
+  toss-mariadb-data:
+
+networks:
+  infra-network:
+    external: true
+    name: infra-network
