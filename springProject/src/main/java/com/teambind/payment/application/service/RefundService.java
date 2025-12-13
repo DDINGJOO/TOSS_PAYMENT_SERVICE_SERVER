@@ -74,8 +74,8 @@ public class RefundService {
             log.info("환불 처리 완료 - refundId: {}, transactionId: {}, refundAmount: {}",
                     completedRefund.getRefundId(), completedRefund.getTransactionId(), refundAmount);
 
-            // 7. 환불 완료 이벤트 발행
-            RefundCompletedEvent refundEvent = RefundCompletedEvent.from(completedRefund);
+            // 7. 환불 완료 이벤트 발행 (재고 롤백을 위해 reservationId 포함)
+            RefundCompletedEvent refundEvent = RefundCompletedEvent.from(completedRefund, payment.getReservationId());
             paymentEventPublisher.publishRefundCompletedEvent(refundEvent);
 
             // 8. 결제 취소 이벤트 발행
