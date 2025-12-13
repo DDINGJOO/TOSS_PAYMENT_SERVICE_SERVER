@@ -53,7 +53,7 @@ reservation:
 
 kafka:
   topics:
-    reservation-confirmed: reservation-confirmed-test
+    reservation-confirmed: complete-reservation-info-test
     payment-completed: payment-completed-test
     payment-cancelled: payment-cancelled-test
     refund-completed: refund-completed-test
