@@ -95,6 +95,7 @@ class PaymentEventConsumerTest {
         Map<String, Object> message = new HashMap<>();
         message.put("refundId", "refund-123");
         message.put("paymentId", "payment-123");
+        message.put("reservationId", "reservation-123");
         message.put("originalAmount", 100000L);
         message.put("refundAmount", 100000L);
         message.put("reason", "Customer request");
