@@ -44,13 +44,13 @@ public class ReservationEventConsumer {
 
             ReservationConfirmedEvent event = objectMapper.convertValue(message, ReservationConfirmedEvent.class);
 
-            log.info("Processing reservation confirmed - reservationId: {}, amount: {}, checkInDate: {}",
-                    event.reservationId(), event.amount(), event.checkInDate());
+            log.info("Processing reservation confirmed - reservationId: {}, totalPrice: {}, checkInDate: {}",
+                    event.reservationId(), event.totalPrice(), event.checkInDate());
 
             // Dual Path Architecture - Kafka 이벤트 경로로 결제 준비
             paymentPrepareService.preparePayment(
                     event.reservationId(),
-                    event.amount(),
+                    event.totalPrice(),
                     event.checkInDate()
             );
 
