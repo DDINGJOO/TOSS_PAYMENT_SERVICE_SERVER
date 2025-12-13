@@ -1,10 +1,6 @@
 package com.teambind.payment.adapter.out.toss.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public record TossPaymentConfirmResponse(
         // 결제 키
@@ -16,8 +12,8 @@ public record TossPaymentConfirmResponse(
         // 결제 타입 (NORMAL, BILLING 등)
         String type,
 
-        // 거래 ID
-        String transactionId,
+        // 마지막 거래 키
+        String lastTransactionKey,
 
         // 결제 금액
         Long totalAmount,
@@ -28,9 +24,7 @@ public record TossPaymentConfirmResponse(
         // 상태 (DONE, CANCELED 등)
         String status,
 
-        // 결제 승인 시각
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-        LocalDateTime approvedAt
+        // 결제 승인 시각 (Toss API는 ISO 8601 형식으로 타임존 포함하여 반환)
+        OffsetDateTime approvedAt
 ) {
 }
