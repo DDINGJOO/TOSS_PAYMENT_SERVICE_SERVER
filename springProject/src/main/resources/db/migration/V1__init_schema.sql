@@ -37,12 +37,13 @@ CREATE TABLE refunds (
 
 -- payment_events 테이블 (Outbox Pattern)
 CREATE TABLE payment_events (
-    event_id VARCHAR(50) PRIMARY KEY,
+    event_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     aggregate_id VARCHAR(50) NOT NULL COMMENT 'paymentId 또는 reservationId',
     event_type VARCHAR(50) NOT NULL COMMENT 'PAYMENT_COMPLETED, PAYMENT_FAILED, REFUND_COMPLETED',
     payload TEXT NOT NULL COMMENT 'JSON 형식의 이벤트 데이터',
     status VARCHAR(20) NOT NULL COMMENT 'PENDING, PUBLISHED, FAILED',
     retry_count INT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    published_at DATETIME
+    published_at DATETIME,
+    error_message TEXT COMMENT '발행 실패 에러 메시지'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
