@@ -4,7 +4,8 @@
 
 ## 개요
 
-Toss Payment Service는 **Outbox Pattern**을 사용하여 안정적인 이벤트 발행을 보장합니다. 비즈니스 트랜잭션과 이벤트 발행의 원자성을 유지하며, Kafka를 통해 다른 마이크로서비스와 통신합니다.
+Toss Payment Service는 **Outbox Pattern**을 사용하여 안정적인 이벤트 발행을 보장합니다. 비즈니스 트랜잭션과 이벤트 발행의 원자성을 유지하며, Kafka를 통해 다른 마이크로서비스와
+통신합니다.
 
 ## Outbox Pattern
 
@@ -15,6 +16,7 @@ Outbox Pattern은 이벤트를 외부 메시징 시스템에 직접 발행하지
 ### 왜 Outbox Pattern인가?
 
 **문제 상황**:
+
 ```java
 @Transactional
 public Payment confirmPayment(...) {
@@ -29,11 +31,13 @@ public Payment confirmPayment(...) {
 ```
 
 **문제점**:
+
 - DB 저장은 성공했지만 Kafka 발행이 실패하면?
 - Kafka 발행은 성공했지만 DB 저장이 롤백되면?
 - **데이터 불일치 발생**
 
 **해결책 (Outbox Pattern)**:
+
 ```java
 @Transactional
 public Payment confirmPayment(...) {
@@ -376,6 +380,7 @@ public interface PaymentEventRepository extends JpaRepository<PaymentEvent, Long
 **Topic**: `payment-completed`
 
 **Consumers**:
+
 - Reservation Service: 예약 상태 업데이트
 - Notification Service: 결제 완료 알림 발송
 - Analytics Service: 결제 데이터 수집
@@ -395,6 +400,7 @@ public interface PaymentEventRepository extends JpaRepository<PaymentEvent, Long
 **Topic**: `payment-cancelled`
 
 **Consumers**:
+
 - Reservation Service: 예약 상태 취소로 변경
 - Notification Service: 결제 취소 알림 발송
 
@@ -418,6 +424,7 @@ public interface PaymentEventRepository extends JpaRepository<PaymentEvent, Long
 **Topic**: `refund-completed`
 
 **Consumers**:
+
 - Reservation Service: 예약 상태 환불로 변경
 - Notification Service: 환불 완료 알림 발송
 - Accounting Service: 환불 회계 처리
@@ -447,16 +454,19 @@ public Payment confirmPayment(String paymentId, String orderId, String paymentKe
 ```
 
 **시나리오 1: 정상 플로우**
+
 ```
 Payment 저장 성공 → PaymentEvent 저장 성공 → COMMIT
 ```
 
 **시나리오 2: PaymentEvent 저장 실패**
+
 ```
 Payment 저장 성공 → PaymentEvent 저장 실패 → ROLLBACK (Payment도 롤백)
 ```
 
 **시나리오 3: Kafka 발행 실패**
+
 ```
 Payment 저장 성공 → PaymentEvent 저장 성공 (status=PENDING) → COMMIT
 ↓
@@ -512,24 +522,24 @@ public void resetForRetry() {
 ### 모니터링 지표
 
 1. **PENDING 이벤트 수**
-   - 정상: 0~10개
-   - 주의: 10~100개 (발행 지연)
-   - 위험: 100개 이상 (Kafka 장애 가능성)
+	- 정상: 0~10개
+	- 주의: 10~100개 (발행 지연)
+	- 위험: 100개 이상 (Kafka 장애 가능성)
 
 2. **FAILED 이벤트 수**
-   - 정상: 0개
-   - 주의: 1~10개 (일시적 오류)
-   - 위험: 10개 이상 (Kafka 장애 또는 설정 오류)
+	- 정상: 0개
+	- 주의: 1~10개 (일시적 오류)
+	- 위험: 10개 이상 (Kafka 장애 또는 설정 오류)
 
 3. **평균 발행 시간**
-   - 정상: 이벤트 생성 후 1~2초 이내 발행
-   - 주의: 2~10초
-   - 위험: 10초 이상
+	- 정상: 이벤트 생성 후 1~2초 이내 발행
+	- 주의: 2~10초
+	- 위험: 10초 이상
 
 4. **재시도 횟수**
-   - 정상: 0회
-   - 주의: 1~3회
-   - 위험: 4~5회 (수동 개입 고려)
+	- 정상: 0회
+	- 주의: 1~3회
+	- 위험: 4~5회 (수동 개입 고려)
 
 ### 로그 예시
 
@@ -617,6 +627,7 @@ void publishPendingEvents_success() {
 **상황**: Kafka Broker가 다운되어 이벤트 발행 불가
 
 **대응**:
+
 1. PaymentEvent는 PENDING 상태로 DB에 누적
 2. OutboxEventScheduler가 계속 재시도
 3. Kafka 복구 후 자동으로 발행 재개
@@ -630,6 +641,7 @@ void publishPendingEvents_success() {
 **상황**: DB 다운으로 PaymentEvent 저장 실패
 
 **대응**:
+
 1. Payment 저장도 함께 롤백
 2. 클라이언트에게 500 에러 반환
 3. 클라이언트가 결제 승인 재시도
@@ -643,6 +655,7 @@ void publishPendingEvents_success() {
 **상황**: 스케줄러가 비정상 종료
 
 **대응**:
+
 1. PaymentEvent는 PENDING 상태로 DB에 누적
 2. 스케줄러 재시작 후 자동으로 발행 재개
 
