@@ -15,20 +15,18 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-
-
+	
+	
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ErrorResponse> handlePlaceException(
 			CustomException ex, HttpServletRequest request) {
 		log.warn("PlaceException [{}]: {}", ex.getExceptionType(), ex.getMessage());
-
+		
 		ErrorResponse errorResponse = ErrorResponse.of(ex, request.getRequestURI());
 		return ResponseEntity.status(ex.getHttpStatus()).body(errorResponse);
 	}
-
 	
-
-
+	
 	/**
 	 * Validation 예외 처리 (필드 에러 상세 정보 포함)
 	 */
@@ -39,7 +37,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			org.springframework.http.HttpStatusCode status,
 			WebRequest request) {
 		log.warn("Validation failed: {} field errors", ex.getBindingResult().getFieldErrorCount());
-
+		
 		ErrorResponse body = ErrorResponse.ofValidation(
 				HttpStatus.BAD_REQUEST.value(),
 				"VALIDATION_ERROR",
@@ -49,7 +47,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		);
 		return ResponseEntity.badRequest().body(body);
 	}
-
+	
 	/**
 	 * 일반 예외 처리 (최종 fallback)
 	 */
@@ -57,7 +55,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	public ResponseEntity<ErrorResponse> handleGeneralException(
 			Exception ex, HttpServletRequest request) {
 		log.error("Unexpected exception occurred", ex);
-
+		
 		ErrorResponse errorResponse = ErrorResponse.of(
 				HttpStatus.INTERNAL_SERVER_ERROR.value(),
 				ErrorCode.INTERNAL_SERVER_ERROR.getErrCode(),
@@ -66,7 +64,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 	}
-
+	
 	private String extractPath(WebRequest request) {
 		String description = request.getDescription(false);
 		return description.replace("uri=", "");
