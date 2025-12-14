@@ -27,12 +27,12 @@ Toss Payment Service의 RESTful API 명세서입니다.
 
 ### 공통 헤더
 
-| 헤더명 | 필수 | 설명 | 예시 |
-|--------|------|------|------|
-| `Content-Type` | ✅ | 요청 본문 형식 | `application/json` |
-| `Accept` | ✅ | 응답 본문 형식 | `application/json` |
-| `X-Request-ID` | ❌ | 요청 추적 ID | `req-20251120-001` |
-| `Authorization` | ❌ | 인증 토큰 (향후 추가) | `Bearer {token}` |
+| 헤더명             | 필수 | 설명            | 예시                 |
+|-----------------|----|---------------|--------------------|
+| `Content-Type`  | ✅  | 요청 본문 형식      | `application/json` |
+| `Accept`        | ✅  | 응답 본문 형식      | `application/json` |
+| `X-Request-ID`  | ❌  | 요청 추적 ID      | `req-20251120-001` |
+| `Authorization` | ❌  | 인증 토큰 (향후 추가) | `Bearer {token}`   |
 
 ### 공통 응답 형식
 
@@ -64,17 +64,17 @@ Toss Payment Service의 RESTful API 명세서입니다.
 
 ### HTTP 상태 코드
 
-| 상태 코드 | 설명 | 사용 시나리오 |
-|-----------|------|--------------|
-| 200 OK | 성공 | 조회 성공 |
-| 201 Created | 생성 성공 | 결제/환불 생성 성공 |
-| 400 Bad Request | 잘못된 요청 | 입력 검증 실패 |
-| 404 Not Found | 리소스 없음 | 존재하지 않는 결제 ID |
-| 409 Conflict | 충돌 | 금액 불일치, 중복 요청 |
-| 422 Unprocessable Entity | 비즈니스 규칙 위반 | 환불 불가 상태 |
-| 500 Internal Server Error | 서버 오류 | 예상치 못한 오류 |
-| 502 Bad Gateway | 외부 서비스 오류 | Toss API 오류 |
-| 503 Service Unavailable | 서비스 불가 | 예약 서비스 장애 |
+| 상태 코드                     | 설명         | 사용 시나리오       |
+|---------------------------|------------|---------------|
+| 200 OK                    | 성공         | 조회 성공         |
+| 201 Created               | 생성 성공      | 결제/환불 생성 성공   |
+| 400 Bad Request           | 잘못된 요청     | 입력 검증 실패      |
+| 404 Not Found             | 리소스 없음     | 존재하지 않는 결제 ID |
+| 409 Conflict              | 충돌         | 금액 불일치, 중복 요청 |
+| 422 Unprocessable Entity  | 비즈니스 규칙 위반 | 환불 불가 상태      |
+| 500 Internal Server Error | 서버 오류      | 예상치 못한 오류     |
+| 502 Bad Gateway           | 외부 서비스 오류  | Toss API 오류   |
+| 503 Service Unavailable   | 서비스 불가     | 예약 서비스 장애     |
 
 ---
 
@@ -96,11 +96,11 @@ Toss Payment Service의 RESTful API 명세서입니다.
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
-|------|------|------|------|----------|
-| `reservationId` | String | ✅ | 예약 ID | 필수 |
-| `amount` | Number | ✅ | 결제 금액 (원) | 양수 |
-| `checkInDate` | String | ✅ | 체크인 날짜/시각 | ISO-8601, 현재 또는 미래 |
+| 필드              | 타입     | 필수 | 설명        | 제약 조건              |
+|-----------------|--------|----|-----------|--------------------|
+| `reservationId` | String | ✅  | 예약 ID     | 필수                 |
+| `amount`        | Number | ✅  | 결제 금액 (원) | 양수                 |
+| `checkInDate`   | String | ✅  | 체크인 날짜/시각 | ISO-8601, 현재 또는 미래 |
 
 **Response (201 Created)**
 
@@ -116,15 +116,15 @@ Toss Payment Service의 RESTful API 명세서입니다.
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `paymentId` | String | 결제 ID (시스템 자동 생성) |
-| `reservationId` | String | 예약 ID |
-| `amount` | Number | 결제 금액 |
-| `status` | String | 결제 상태 (`PREPARED`) |
-| `checkInDate` | String | 체크인 날짜 (환불 정책 계산용) |
-| `idempotencyKey` | String | 자동 생성된 멱등성 키 |
-| `createdAt` | String | 결제 생성 시각 (ISO-8601) |
+| 필드               | 타입     | 설명                  |
+|------------------|--------|---------------------|
+| `paymentId`      | String | 결제 ID (시스템 자동 생성)   |
+| `reservationId`  | String | 예약 ID               |
+| `amount`         | Number | 결제 금액               |
+| `status`         | String | 결제 상태 (`PREPARED`)  |
+| `checkInDate`    | String | 체크인 날짜 (환불 정책 계산용)  |
+| `idempotencyKey` | String | 자동 생성된 멱등성 키        |
+| `createdAt`      | String | 결제 생성 시각 (ISO-8601) |
 
 ---
 
@@ -145,12 +145,12 @@ Toss Payment Service의 RESTful API 명세서입니다.
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
-|------|------|------|------|----------|
-| `paymentId` | String | ✅ | 결제 ID | 필수 |
-| `orderId` | String | ✅ | Toss 주문 ID | 필수 |
-| `paymentKey` | String | ✅ | Toss 결제 키 | 필수 |
-| `amount` | Number | ✅ | 결제 금액 (원) | 양수, 준비된 금액과 일치 필요 |
+| 필드           | 타입     | 필수 | 설명         | 제약 조건             |
+|--------------|--------|----|------------|-------------------|
+| `paymentId`  | String | ✅  | 결제 ID      | 필수                |
+| `orderId`    | String | ✅  | Toss 주문 ID | 필수                |
+| `paymentKey` | String | ✅  | Toss 결제 키  | 필수                |
+| `amount`     | Number | ✅  | 결제 금액 (원)  | 양수, 준비된 금액과 일치 필요 |
 
 **Response (200 OK)**
 
@@ -168,17 +168,17 @@ Toss Payment Service의 RESTful API 명세서입니다.
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `paymentId` | String | 결제 ID |
-| `reservationId` | String | 예약 ID |
-| `amount` | Number | 결제 금액 |
-| `status` | String | 결제 상태 (`COMPLETED`) |
-| `orderId` | String | Toss 주문 ID |
-| `paymentKey` | String | Toss 결제 키 |
-| `transactionId` | String | Toss 거래 ID |
-| `method` | String | 결제 수단 (`CARD`, `EASY_PAY`, `VIRTUAL_ACCOUNT`) |
-| `paidAt` | String | 결제 완료 시각 (ISO-8601) |
+| 필드              | 타입     | 설명                                            |
+|-----------------|--------|-----------------------------------------------|
+| `paymentId`     | String | 결제 ID                                         |
+| `reservationId` | String | 예약 ID                                         |
+| `amount`        | Number | 결제 금액                                         |
+| `status`        | String | 결제 상태 (`COMPLETED`)                           |
+| `orderId`       | String | Toss 주문 ID                                    |
+| `paymentKey`    | String | Toss 결제 키                                     |
+| `transactionId` | String | Toss 거래 ID                                    |
+| `method`        | String | 결제 수단 (`CARD`, `EASY_PAY`, `VIRTUAL_ACCOUNT`) |
+| `paidAt`        | String | 결제 완료 시각 (ISO-8601)                           |
 
 **Error Responses**
 
@@ -290,9 +290,9 @@ curl -X POST http://localhost:8080/api/v1/payments \
 
 **Path Parameters**
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| `paymentId` | String | ✅ | 결제 ID |
+| 파라미터        | 타입     | 필수 | 설명    |
+|-------------|--------|----|-------|
+| `paymentId` | String | ✅  | 결제 ID |
 
 **Request Body**
 
@@ -302,9 +302,9 @@ curl -X POST http://localhost:8080/api/v1/payments \
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
-|------|------|------|------|----------|
-| `reason` | String | ✅ | 취소 사유 | 필수 |
+| 필드       | 타입     | 필수 | 설명    | 제약 조건 |
+|----------|--------|----|-------|-------|
+| `reason` | String | ✅  | 취소 사유 | 필수    |
 
 **Response (200 OK)**
 
@@ -317,12 +317,12 @@ curl -X POST http://localhost:8080/api/v1/payments \
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `paymentId` | String | 결제 ID |
-| `reservationId` | String | 예약 ID |
-| `status` | String | 결제 상태 (`CANCELLED`) |
-| `cancelledAt` | String | 취소 시각 (ISO-8601) |
+| 필드              | 타입     | 설명                  |
+|-----------------|--------|---------------------|
+| `paymentId`     | String | 결제 ID               |
+| `reservationId` | String | 예약 ID               |
+| `status`        | String | 결제 상태 (`CANCELLED`) |
+| `cancelledAt`   | String | 취소 시각 (ISO-8601)    |
 
 **Error Responses**
 
@@ -376,9 +376,9 @@ curl -X POST http://localhost:8080/api/v1/payments/PAY-1A2B3C4D/cancel \
 
 **Path Parameters**
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| `paymentId` | String | ✅ | 결제 ID |
+| 파라미터        | 타입     | 필수 | 설명    |
+|-------------|--------|----|-------|
+| `paymentId` | String | ✅  | 결제 ID |
 
 **Response (200 OK)**
 
@@ -398,19 +398,19 @@ curl -X POST http://localhost:8080/api/v1/payments/PAY-1A2B3C4D/cancel \
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `paymentId` | String | 결제 ID |
-| `reservationId` | String | 예약 ID |
-| `amount` | Number | 결제 금액 |
-| `paymentMethod` | String | 결제 수단 |
-| `status` | String | 결제 상태 (`PENDING`, `COMPLETED`, `FAILED`, `CANCELLED`) |
-| `orderId` | String | Toss 주문 ID |
-| `paymentKey` | String | Toss 결제 키 |
-| `transactionId` | String | Toss 거래 ID |
-| `checkInDate` | String | 체크인 날짜 (환불 계산용) |
-| `createdAt` | String | 결제 생성 시각 |
-| `paidAt` | String | 결제 완료 시각 |
+| 필드              | 타입     | 설명                                                    |
+|-----------------|--------|-------------------------------------------------------|
+| `paymentId`     | String | 결제 ID                                                 |
+| `reservationId` | String | 예약 ID                                                 |
+| `amount`        | Number | 결제 금액                                                 |
+| `paymentMethod` | String | 결제 수단                                                 |
+| `status`        | String | 결제 상태 (`PENDING`, `COMPLETED`, `FAILED`, `CANCELLED`) |
+| `orderId`       | String | Toss 주문 ID                                            |
+| `paymentKey`    | String | Toss 결제 키                                             |
+| `transactionId` | String | Toss 거래 ID                                            |
+| `checkInDate`   | String | 체크인 날짜 (환불 계산용)                                       |
+| `createdAt`     | String | 결제 생성 시각                                              |
+| `paidAt`        | String | 결제 완료 시각                                              |
 
 **Error Response (404 Not Found)**
 
@@ -453,10 +453,10 @@ curl -X GET http://localhost:8080/api/v1/payments/PAY-20251120-001
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 | 제약 조건 |
-|------|------|------|------|----------|
-| `paymentId` | String | ✅ | 결제 ID | 50자 이하 |
-| `reason` | String | ❌ | 환불 사유 | 500자 이하 |
+| 필드          | 타입     | 필수 | 설명    | 제약 조건   |
+|-------------|--------|----|-------|---------|
+| `paymentId` | String | ✅  | 결제 ID | 50자 이하  |
+| `reason`    | String | ❌  | 환불 사유 | 500자 이하 |
 
 **Response (201 Created)**
 
@@ -475,18 +475,18 @@ curl -X GET http://localhost:8080/api/v1/payments/PAY-20251120-001
 }
 ```
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `refundId` | String | 환불 ID (시스템 생성) |
-| `paymentId` | String | 원본 결제 ID |
-| `originalAmount` | Number | 원본 결제 금액 |
-| `refundAmount` | Number | 실제 환불 금액 |
-| `refundRate` | Number | 환불율 (0.0 ~ 1.0) |
-| `commissionFree` | Boolean | 수수료 면제 여부 |
-| `status` | String | 환불 상태 (`COMPLETED`) |
-| `tossRefundKey` | String | Toss 환불 키 |
-| `requestedAt` | String | 환불 요청 시각 |
-| `completedAt` | String | 환불 완료 시각 |
+| 필드               | 타입      | 설명                  |
+|------------------|---------|---------------------|
+| `refundId`       | String  | 환불 ID (시스템 생성)      |
+| `paymentId`      | String  | 원본 결제 ID            |
+| `originalAmount` | Number  | 원본 결제 금액            |
+| `refundAmount`   | Number  | 실제 환불 금액            |
+| `refundRate`     | Number  | 환불율 (0.0 ~ 1.0)     |
+| `commissionFree` | Boolean | 수수료 면제 여부           |
+| `status`         | String  | 환불 상태 (`COMPLETED`) |
+| `tossRefundKey`  | String  | Toss 환불 키           |
+| `requestedAt`    | String  | 환불 요청 시각            |
+| `completedAt`    | String  | 환불 완료 시각            |
 
 **환불율 계산 예시**
 
@@ -598,9 +598,9 @@ curl -X POST http://localhost:8080/api/v1/refunds \
 
 **Path Parameters**
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| `refundId` | String | ✅ | 환불 ID |
+| 파라미터       | 타입     | 필수 | 설명    |
+|------------|--------|----|-------|
+| `refundId` | String | ✅  | 환불 ID |
 
 **Response (200 OK)**
 
@@ -635,9 +635,9 @@ curl -X GET http://localhost:8080/api/v1/refunds/REF-20251120-001
 
 **Query Parameters**
 
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| `paymentId` | String | ✅ | 결제 ID |
+| 파라미터        | 타입     | 필수 | 설명    |
+|-------------|--------|----|-------|
+| `paymentId` | String | ✅  | 결제 ID |
 
 **Response (200 OK)**
 
@@ -705,38 +705,38 @@ curl -X GET http://localhost:8080/actuator/health
 
 ### 결제 관련
 
-| 에러 코드 | HTTP 상태 | 설명 | 해결 방법 |
-|----------|-----------|------|----------|
-| `PAYMENT_NOT_FOUND` | 404 | 결제를 찾을 수 없음 | 올바른 결제 ID 확인 |
-| `PAYMENT_AMOUNT_MISMATCH` | 409 | 요청 금액과 실제 금액 불일치 | 예약 금액 재확인 |
-| `DUPLICATE_PAYMENT` | 409 | 중복 결제 요청 | 다른 멱등성 키 사용 |
-| `INVALID_PAYMENT_STATE` | 422 | 잘못된 결제 상태 | 결제 상태 확인 후 재시도 |
-| `TOSS_API_ERROR` | 502 | Toss API 오류 | Toss 에러 메시지 확인 |
+| 에러 코드                     | HTTP 상태 | 설명               | 해결 방법          |
+|---------------------------|---------|------------------|----------------|
+| `PAYMENT_NOT_FOUND`       | 404     | 결제를 찾을 수 없음      | 올바른 결제 ID 확인   |
+| `PAYMENT_AMOUNT_MISMATCH` | 409     | 요청 금액과 실제 금액 불일치 | 예약 금액 재확인      |
+| `DUPLICATE_PAYMENT`       | 409     | 중복 결제 요청         | 다른 멱등성 키 사용    |
+| `INVALID_PAYMENT_STATE`   | 422     | 잘못된 결제 상태        | 결제 상태 확인 후 재시도 |
+| `TOSS_API_ERROR`          | 502     | Toss API 오류      | Toss 에러 메시지 확인 |
 
 ### 환불 관련
 
-| 에러 코드 | HTTP 상태 | 설명 | 해결 방법 |
-|----------|-----------|------|----------|
-| `REFUND_NOT_FOUND` | 404 | 환불을 찾을 수 없음 | 올바른 환불 ID 확인 |
-| `REFUND_NOT_ALLOWED` | 422 | 환불 불가 | 환불 가능 기간 확인 |
-| `ALREADY_REFUNDED` | 422 | 이미 환불됨 | 환불 내역 확인 |
-| `INVALID_REFUND_STATE` | 422 | 잘못된 환불 상태 | 환불 상태 확인 |
+| 에러 코드                  | HTTP 상태 | 설명          | 해결 방법        |
+|------------------------|---------|-------------|--------------|
+| `REFUND_NOT_FOUND`     | 404     | 환불을 찾을 수 없음 | 올바른 환불 ID 확인 |
+| `REFUND_NOT_ALLOWED`   | 422     | 환불 불가       | 환불 가능 기간 확인  |
+| `ALREADY_REFUNDED`     | 422     | 이미 환불됨      | 환불 내역 확인     |
+| `INVALID_REFUND_STATE` | 422     | 잘못된 환불 상태   | 환불 상태 확인     |
 
 ### 예약 관련
 
-| 에러 코드 | HTTP 상태 | 설명 | 해결 방법 |
-|----------|-----------|------|----------|
-| `RESERVATION_NOT_FOUND` | 404 | 예약을 찾을 수 없음 | 올바른 예약 ID 확인 |
-| `RESERVATION_SERVICE_UNAVAILABLE` | 503 | 예약 서비스 장애 | 잠시 후 재시도 |
+| 에러 코드                             | HTTP 상태 | 설명          | 해결 방법        |
+|-----------------------------------|---------|-------------|--------------|
+| `RESERVATION_NOT_FOUND`           | 404     | 예약을 찾을 수 없음 | 올바른 예약 ID 확인 |
+| `RESERVATION_SERVICE_UNAVAILABLE` | 503     | 예약 서비스 장애   | 잠시 후 재시도     |
 
 ### 공통
 
-| 에러 코드 | HTTP 상태 | 설명 | 해결 방법 |
-|----------|-----------|------|----------|
-| `INVALID_REQUEST` | 400 | 잘못된 요청 | 입력값 검증 |
-| `UNAUTHORIZED` | 401 | 인증 실패 | 토큰 확인 |
-| `FORBIDDEN` | 403 | 권한 없음 | 권한 확인 |
-| `INTERNAL_SERVER_ERROR` | 500 | 서버 오류 | 관리자 문의 |
+| 에러 코드                   | HTTP 상태 | 설명     | 해결 방법  |
+|-------------------------|---------|--------|--------|
+| `INVALID_REQUEST`       | 400     | 잘못된 요청 | 입력값 검증 |
+| `UNAUTHORIZED`          | 401     | 인증 실패  | 토큰 확인  |
+| `FORBIDDEN`             | 403     | 권한 없음  | 권한 확인  |
+| `INTERNAL_SERVER_ERROR` | 500     | 서버 오류  | 관리자 문의 |
 
 ---
 
