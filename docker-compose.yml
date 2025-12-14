@@ -13,7 +13,7 @@ services:
       - mariadb-data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,7 +44,7 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_LOG_RETENTION_HOURS: 168
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
       interval: 10s
       timeout: 10s
       retries: 5
