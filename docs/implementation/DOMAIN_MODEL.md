@@ -64,11 +64,13 @@ Toss Payment Service는 도메인 주도 설계(DDD) 원칙을 따라 비즈니�
 **패키지**: `com.teambind.payment.domain.Payment`
 
 **책임**:
+
 - 결제 생명주기 관리 (준비 → 완료 → 취소)
 - 결제 금액 및 상태 검증
 - 멱등성 보장
 
 **속성**:
+
 ```java
 @Entity
 @Table(name = "payments")
@@ -100,6 +102,7 @@ public class Payment {
 ```
 
 **상태 전이**:
+
 ```
 PREPARED ──complete()──> COMPLETED ──cancel()──> CANCELLED
     │                         │
@@ -109,6 +112,7 @@ PREPARED ──complete()──> COMPLETED ──cancel()──> CANCELLED
 **주요 메서드**:
 
 #### 결제 준비
+
 ```java
 public static Payment prepare(
     String reservationId,
@@ -116,11 +120,13 @@ public static Payment prepare(
     LocalDateTime checkInDate
 )
 ```
+
 - 새로운 결제 준비
 - paymentId, idempotencyKey 자동 생성
 - 상태: PREPARED
 
 #### 결제 완료
+
 ```java
 public void complete(
     String orderId,
@@ -129,33 +135,40 @@ public void complete(
     PaymentMethod method
 )
 ```
+
 - Toss API 승인 후 호출
 - PREPARED 상태에서만 가능
 - 상태: COMPLETED
 
 #### 결제 취소
+
 ```java
 public void cancel()
 ```
+
 - COMPLETED 상태에서만 가능
 - cancelledAt 설정
 - 상태: CANCELLED
 
 #### 결제 실패
+
 ```java
 public void fail(String reason)
 ```
+
 - COMPLETED 상태 외 모두 가능
 - failureReason 설정
 - 상태: FAILED
 
 #### 검증 메서드
+
 ```java
 public void validateAmount(Money requestedAmount)
 public void validateRefundable()
 ```
 
 **비즈니스 규칙**:
+
 1. 결제 ID는 "PAY-" 접두사 + UUID 8자리
 2. 멱등성 키는 "IDEM-{reservationId}-{UUID 8자리}"
 3. 완료된 결제만 취소 가능
@@ -169,11 +182,13 @@ public void validateRefundable()
 **패키지**: `com.teambind.payment.domain.Refund`
 
 **책임**:
+
 - 환불 생명주기 관리 (요청 → 승인 → 완료)
 - 환불 금액 검증
 - 환불 정책 적용
 
 **속성**:
+
 ```java
 @Entity
 @Table(name = "refunds")
@@ -204,6 +219,7 @@ public class Refund {
 ```
 
 **상태 전이**:
+
 ```
 PENDING ──approve()──> APPROVED ──complete()──> COMPLETED
     │                      │
@@ -213,6 +229,7 @@ PENDING ──approve()──> APPROVED ──complete()──> COMPLETED
 **주요 메서드**:
 
 #### 환불 요청
+
 ```java
 public static Refund request(
     String paymentId,
@@ -221,33 +238,41 @@ public static Refund request(
     String reason
 )
 ```
+
 - 새로운 환불 요청 생성
 - refundId 자동 생성
 - 상태: PENDING
 
 #### 환불 승인
+
 ```java
 public void approve()
 ```
+
 - PENDING 상태에서만 가능
 - 상태: APPROVED
 
 #### 환불 완료
+
 ```java
 public void complete(String transactionId)
 ```
+
 - APPROVED 상태에서만 가능
 - Toss API 환불 완료 후 호출
 - 상태: COMPLETED
 
 #### 환불 실패
+
 ```java
 public void fail(String failureReason)
 ```
+
 - COMPLETED 외 모두 가능
 - 상태: FAILED
 
 **비즈니스 규칙**:
+
 1. 환불 ID는 "REF-" 접두사 + UUID 8자리
 2. 환불 금액은 원래 금액을 초과할 수 없음
 3. 환불 사유는 필수
@@ -262,11 +287,13 @@ public void fail(String failureReason)
 **패키지**: `com.teambind.payment.domain.Money`
 
 **책임**:
+
 - 금액 표현 및 연산
 - 통화 검증
 - 불변성 보장
 
 **속성**:
+
 ```java
 @Embeddable
 public class Money {
@@ -300,6 +327,7 @@ public boolean isPositive()
 ```
 
 **불변성**:
+
 - 모든 연산은 새로운 Money 객체 반환
 - 원본 객체는 변경되지 않음
 
@@ -310,6 +338,7 @@ Money half = original.multiply(BigDecimal.valueOf(0.5));
 ```
 
 **검증 규칙**:
+
 1. value는 null일 수 없음
 2. value는 음수일 수 없음
 3. currency는 null 또는 빈 문자열일 수 없음
@@ -322,11 +351,13 @@ Money half = original.multiply(BigDecimal.valueOf(0.5));
 **패키지**: `com.teambind.payment.domain.RefundPolicy`
 
 **책임**:
+
 - 체크인 날짜 기준 환불 정책 적용
 - 환불 금액 계산
 - 환불 가능 여부 판단
 
 **속성**:
+
 ```java
 public class RefundPolicy {
     private static final int FULL_REFUND_DAYS = 7;      // 100% 환불
@@ -340,11 +371,11 @@ public class RefundPolicy {
 
 **환불 정책**:
 
-| 체크인까지 남은 일수 | 환불율 |
-|-------------------|-------|
-| 7일 이상 | 100% |
-| 3일 이상 ~ 7일 미만 | 50% |
-| 3일 미만 | 0% (환불 불가) |
+| 체크인까지 남은 일수   | 환불율        |
+|---------------|------------|
+| 7일 이상         | 100%       |
+| 3일 이상 ~ 7일 미만 | 50%        |
+| 3일 미만         | 0% (환불 불가) |
 
 **주요 메서드**:
 
@@ -366,6 +397,7 @@ public int getRefundRate()  // 100, 50, 또는 0 반환
 ```
 
 **사용 예시**:
+
 ```java
 RefundPolicy policy = RefundPolicy.of(checkInDate, LocalDateTime.now());
 Money refundAmount = policy.calculateRefundAmount(payment.getAmount());
@@ -384,11 +416,13 @@ if (policy.isRefundable()) {
 **패키지**: `com.teambind.payment.domain.PaymentEvent`
 
 **책임**:
+
 - 도메인 이벤트 저장 (Outbox Pattern)
 - 이벤트 발행 상태 관리
 - 재시도 로직 지원
 
 **속성**:
+
 ```java
 @Entity
 @Table(name = "payment_events")
@@ -415,6 +449,7 @@ public class PaymentEvent {
 ```
 
 **이벤트 타입**:
+
 ```java
 public enum EventType {
     PAYMENT_COMPLETED,      // 결제 완료
@@ -424,6 +459,7 @@ public enum EventType {
 ```
 
 **이벤트 상태**:
+
 ```java
 public enum EventStatus {
     PENDING,        // 발행 대기
@@ -455,6 +491,7 @@ public boolean canRetry(int maxRetryCount)
 ```
 
 **Outbox Pattern 플로우**:
+
 ```
 1. 비즈니스 트랜잭션 내에서 PaymentEvent 생성 및 저장
 2. OutboxEventScheduler가 주기적으로 PENDING 이벤트 조회
