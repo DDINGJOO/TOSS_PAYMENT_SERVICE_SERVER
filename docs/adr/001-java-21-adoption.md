@@ -11,12 +11,14 @@
 프로젝트 시작 시점에서 Java 버전을 선택해야 합니다. 현재 LTS 버전은 Java 8, 11, 17, 21이 있으며, 결제 서비스의 특성과 향후 유지보수를 고려한 선택이 필요합니다.
 
 ### 비즈니스 요구사항
+
 - 5년 이상 장기 운영 예정
 - 금융 도메인 (안정성 최우선)
 - 복잡한 환불 정책 로직 구현 필요
 - Kafka Consumer 성능 최적화 필요
 
 ### 기술적 고려사항
+
 - Spring Boot 3.x는 Java 17 이상 필수
 - 최신 언어 기능으로 코드 가독성/안전성 향상
 - 성능 개선 (Virtual Threads, 최적화된 GC)
@@ -32,29 +34,37 @@
 ## 고려한 대안
 
 ### 대안 1: Java 17 LTS
+
 **장점:**
+
 - 더 안정적 (2021년 9월 출시, 3년 이상 검증)
 - 더 넓은 라이브러리 호환성
 - 팀 내 경험이 많음
 
 **단점:**
+
 - Pattern Matching for switch 미지원 (Preview)
 - Record 기능 제한적
 - Virtual Threads 미지원
 - Sealed Classes 미지원
 
 ### 대안 2: Java 11 LTS
+
 **장점:**
+
 - 가장 안정적 (2018년 출시, 6년 이상 검증)
 - 최대 호환성
 
 **단점:**
+
 - Spring Boot 3.x 미지원
 - 최신 언어 기능 대부분 미지원
 - 성능 개선 혜택 없음
 
 ### 대안 3: Java 21 LTS (선택됨)
+
 **장점:**
+
 - **Pattern Matching for switch**: 환불 정책 로직 간결화
 - **Record Classes**: DTO 보일러플레이트 제거
 - **Sealed Classes**: 이벤트 타입 안전성
@@ -63,6 +73,7 @@
 - 최신 GC 최적화 (Z GC, Shenandoah)
 
 **단점:**
+
 - 상대적으로 짧은 검증 기간 (2023년 9월 출시, 1년)
 - 일부 라이브러리 호환성 이슈 가능성
 
@@ -73,6 +84,7 @@
 ### 1. Pattern Matching for switch - 환불 정책 로직 개선
 
 **Before (Java 17):**
+
 ```java
 private BigDecimal determineRefundRate(long daysUntilCheckIn) {
     if (daysUntilCheckIn >= 5) return BigDecimal.valueOf(1.00);
@@ -85,6 +97,7 @@ private BigDecimal determineRefundRate(long daysUntilCheckIn) {
 ```
 
 **After (Java 21):**
+
 ```java
 private BigDecimal determineRefundRate(long daysUntilCheckIn) {
     return switch ((int) daysUntilCheckIn) {
@@ -99,6 +112,7 @@ private BigDecimal determineRefundRate(long daysUntilCheckIn) {
 ```
 
 **개선 효과:**
+
 - 코드 라인 수 40% 감소
 - 가드 패턴으로 조건 명확화
 - 컴파일러가 모든 케이스 검증 (누락 방지)
@@ -108,6 +122,7 @@ private BigDecimal determineRefundRate(long daysUntilCheckIn) {
 ### 2. Record Classes - DTO 보일러플레이트 제거
 
 **Before (Java 17):**
+
 ```java
 public class PaymentConfirmRequest {
     private final String paymentKey;
@@ -143,6 +158,7 @@ public class PaymentConfirmRequest {
 ```
 
 **After (Java 21):**
+
 ```java
 public record PaymentConfirmRequest(
     String paymentKey,
@@ -165,6 +181,7 @@ public record PaymentConfirmRequest(
 ```
 
 **개선 효과:**
+
 - 코드 라인 수 80% 감소
 - equals/hashCode/toString 자동 생성
 - 불변성 보장 (자동 final)
@@ -175,6 +192,7 @@ public record PaymentConfirmRequest(
 ### 3. Sealed Classes - 이벤트 타입 안전성
 
 **Before (Java 17):**
+
 ```java
 public interface PaymentEvent {
     String eventId();
@@ -199,6 +217,7 @@ public void handle(PaymentEvent event) {
 ```
 
 **After (Java 21):**
+
 ```java
 public sealed interface PaymentEvent
     permits PaymentCompletedEvent, PaymentFailedEvent, PaymentExpiredEvent {
@@ -222,6 +241,7 @@ public void handle(PaymentEvent event) {
 ```
 
 **개선 효과:**
+
 - 타입 안전성 강화 (컴파일 타임 검증)
 - 새 이벤트 타입 추가 시 누락 방지
 - IDE 자동완성 지원 향상
@@ -231,6 +251,7 @@ public void handle(PaymentEvent event) {
 ### 4. Virtual Threads - Kafka Consumer 성능 최적화
 
 **Before (Java 17 - Platform Threads):**
+
 ```java
 @Configuration
 public class KafkaConsumerConfig {
@@ -256,6 +277,7 @@ public class KafkaConsumerConfig {
 ```
 
 **After (Java 21 - Virtual Threads):**
+
 ```java
 @Configuration
 public class KafkaConsumerConfig {
@@ -278,6 +300,7 @@ public class KafkaConsumerConfig {
 ```
 
 **개선 효과:**
+
 - 동시 처리 이벤트 수 10배 증가 (50 → 수천 개)
 - 메모리 사용량 80% 감소
 - I/O 대기 시간 동안 다른 작업 처리 (처리량 증가)
@@ -289,17 +312,17 @@ public class KafkaConsumerConfig {
 
 ### 환불 정책 계산 (1,000,000회 실행)
 
-| Java 버전 | 실행 시간 | 메모리 사용 | 개선율 |
-|-----------|----------|------------|--------|
-| Java 17 (if-else) | 850ms | 150MB | - |
-| Java 21 (switch) | 720ms | 140MB | 15% 빠름 |
+| Java 버전           | 실행 시간 | 메모리 사용 | 개선율    |
+|-------------------|-------|--------|--------|
+| Java 17 (if-else) | 850ms | 150MB  | -      |
+| Java 21 (switch)  | 720ms | 140MB  | 15% 빠름 |
 
 ### Kafka Consumer 처리량 (초당 메시지 수)
 
-| Java 버전 | 스레드 모델 | 처리량 (msg/s) | CPU 사용률 | 개선율 |
-|-----------|------------|---------------|-----------|--------|
-| Java 17 | Platform (50 threads) | 5,000 | 60% | - |
-| Java 21 | Virtual (unlimited) | 15,000 | 55% | 3배 증가 |
+| Java 버전 | 스레드 모델                | 처리량 (msg/s) | CPU 사용률 | 개선율   |
+|---------|-----------------------|-------------|---------|-------|
+| Java 17 | Platform (50 threads) | 5,000       | 60%     | -     |
+| Java 21 | Virtual (unlimited)   | 15,000      | 55%     | 3배 증가 |
 
 ---
 
@@ -308,16 +331,18 @@ public class KafkaConsumerConfig {
 ### 리스크 1: 라이브러리 호환성 이슈
 
 **완화 전략:**
+
 - Spring Boot 3.5.7 사용 (Java 21 완전 지원)
 - 주요 라이브러리 호환성 사전 검증
-  - Spring Data JPA 3.5.x ✅
-  - Spring Cloud OpenFeign 4.x ✅
-  - Spring Kafka 3.x ✅
-  - Hibernate 6.x ✅
+	- Spring Data JPA 3.5.x ✅
+	- Spring Cloud OpenFeign 4.x ✅
+	- Spring Kafka 3.x ✅
+	- Hibernate 6.x ✅
 
 ### 리스크 2: 프로덕션 검증 부족
 
 **완화 전략:**
+
 - 철저한 통합 테스트 및 부하 테스트 수행
 - 카나리 배포로 점진적 롤아웃
 - 모니터링 강화 (JVM 메트릭, GC 로그)
@@ -325,6 +350,7 @@ public class KafkaConsumerConfig {
 ### 리스크 3: 팀 학습 곡선
 
 **완화 전략:**
+
 - Java 21 주요 기능 스터디 세션 (2시간)
 - 코드 리뷰로 Best Practice 공유
 - 공식 문서 및 예제 코드 참고
@@ -334,6 +360,7 @@ public class KafkaConsumerConfig {
 ## 마이그레이션 전략
 
 ### 단계 1: 기본 설정 (Day 1)
+
 ```gradle
 // build.gradle
 java {
@@ -343,14 +370,17 @@ java {
 ```
 
 ### 단계 2: Record 변환 (Day 2-3)
+
 - DTO 클래스 → Record로 변환
 - 예상 작업량: 20개 클래스, 2일
 
 ### 단계 3: Pattern Matching 적용 (Day 4)
+
 - 환불 정책 switch문 변환
 - 이벤트 핸들러 switch문 변환
 
 ### 단계 4: Virtual Threads 적용 (Day 5)
+
 - Kafka Consumer 설정 변경
 - 성능 테스트 및 검증
 
@@ -358,13 +388,13 @@ java {
 
 ## 의사결정 기준
 
-| 기준 | 가중치 | Java 17 | Java 21 | 승자 |
-|------|--------|---------|---------|------|
-| 코드 가독성 | 30% | 7/10 | 10/10 | Java 21 |
-| 타입 안전성 | 25% | 7/10 | 10/10 | Java 21 |
-| 성능 | 20% | 8/10 | 10/10 | Java 21 |
-| 안정성 | 15% | 10/10 | 8/10 | Java 17 |
-| 학습 곡선 | 10% | 10/10 | 7/10 | Java 17 |
+| 기준     | 가중치      | Java 17  | Java 21  | 승자          |
+|--------|----------|----------|----------|-------------|
+| 코드 가독성 | 30%      | 7/10     | 10/10    | Java 21     |
+| 타입 안전성 | 25%      | 7/10     | 10/10    | Java 21     |
+| 성능     | 20%      | 8/10     | 10/10    | Java 21     |
+| 안정성    | 15%      | 10/10    | 8/10     | Java 17     |
+| 학습 곡선  | 10%      | 10/10    | 7/10     | Java 17     |
 | **총점** | **100%** | **8.05** | **9.50** | **Java 21** |
 
 ---
@@ -374,6 +404,7 @@ java {
 **Java 21 LTS 채택이 프로젝트에 더 적합합니다.**
 
 **핵심 이유:**
+
 1. **비즈니스 로직 개선**: Pattern Matching으로 환불 정책 코드 40% 감소
 2. **타입 안전성**: Sealed Classes로 이벤트 처리 버그 원천 차단
 3. **생산성**: Record Classes로 DTO 작성 시간 80% 절감
