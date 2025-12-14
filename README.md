@@ -3,6 +3,7 @@
 > v0.0.1-SNAPSHOT | TeamBind | Java 21 | Spring Boot 3.5.7 | MariaDB | Kafka 3.6
 
 **Java 21 Features**
+
 - Pattern Matching for switch
 - Record Classes
 - Sealed Classes
@@ -31,7 +32,8 @@
 
 **비즈니스 목적**
 
-공간 예약 플랫폼의 결제/환불 처리를 담당하는 독립적인 MSA 서비스입니다. Toss Payments API와 통합하여 안전하고 신뢰성 있는 결제 프로세스를 제공하며, MSA 환경에서 발생할 수 있는 분산 트랜잭션 문제를 Outbox Pattern으로 해결합니다.
+공간 예약 플랫폼의 결제/환불 처리를 담당하는 독립적인 MSA 서비스입니다. Toss Payments API와 통합하여 안전하고 신뢰성 있는 결제 프로세스를 제공하며, MSA 환경에서 발생할 수 있는 분산 트랜잭션
+문제를 Outbox Pattern으로 해결합니다.
 
 **핵심 가치**
 
@@ -844,6 +846,7 @@ public void publishPendingEvents() {
 ```
 
 **장점:**
+
 - 이벤트 유실 방지
 - DB와 Kafka 사이 원자성 보장
 - 자동 재시도
@@ -855,14 +858,14 @@ public void publishPendingEvents() {
 
 ### 시간 기반 차등 환불율
 
-| 환불 요청 시점 | 환불율 | 비고 |
-|--------------|--------|------|
-| 이용 5일 전 이상 | 100% | 전액 환불 |
-| 이용 4일 전 | 70% | 30% 수수료 |
-| 이용 3일 전 | 50% | 50% 수수료 |
-| 이용 2일 전 | 30% | 70% 수수료 |
-| 이용 1일 전 | 10% | 90% 수수료 |
-| 이용 당일 | 환불 불가 | - |
+| 환불 요청 시점   | 환불율   | 비고      |
+|------------|-------|---------|
+| 이용 5일 전 이상 | 100%  | 전액 환불   |
+| 이용 4일 전    | 70%   | 30% 수수료 |
+| 이용 3일 전    | 50%   | 50% 수수료 |
+| 이용 2일 전    | 30%   | 70% 수수료 |
+| 이용 1일 전    | 10%   | 90% 수수료 |
+| 이용 당일      | 환불 불가 | -       |
 
 ### 결제 후 10분 무료 취소
 
@@ -1127,32 +1130,32 @@ GET /api/v1/refunds?paymentId={paymentId}
 
 ### Backend
 
-| 분류 | 기술 | 버전 | 용도 |
-|------|------|------|------|
-| Language | Java | 21 LTS | 메인 언어 (Pattern Matching, Records, Sealed Classes, Virtual Threads) |
-| Framework | Spring Boot | 3.5.7 | 애플리케이션 프레임워크 |
-| ORM | Spring Data JPA | 3.5.7 | 데이터 접근 |
-| Database | MariaDB | 11.x | 메인 데이터베이스 |
-| Message Queue | Kafka | 3.6 | 이벤트 발행 (Virtual Threads로 Consumer 최적화) |
-| HTTP Client | Spring Cloud OpenFeign | 4.x | 예약 서비스 통신 |
-| Validation | Hibernate Validator | 8.x | 입력 검증 |
+| 분류            | 기술                     | 버전     | 용도                                                                 |
+|---------------|------------------------|--------|--------------------------------------------------------------------|
+| Language      | Java                   | 21 LTS | 메인 언어 (Pattern Matching, Records, Sealed Classes, Virtual Threads) |
+| Framework     | Spring Boot            | 3.5.7  | 애플리케이션 프레임워크                                                       |
+| ORM           | Spring Data JPA        | 3.5.7  | 데이터 접근                                                             |
+| Database      | MariaDB                | 11.x   | 메인 데이터베이스                                                          |
+| Message Queue | Kafka                  | 3.6    | 이벤트 발행 (Virtual Threads로 Consumer 최적화)                             |
+| HTTP Client   | Spring Cloud OpenFeign | 4.x    | 예약 서비스 통신                                                          |
+| Validation    | Hibernate Validator    | 8.x    | 입력 검증                                                              |
 
 ### Infrastructure
 
-| 분류 | 기술 | 용도 |
-|------|------|------|
-| Build Tool | Gradle | 의존성 관리 |
-| Containerization | Docker | 컨테이너화 |
-| Orchestration | Docker Compose | 로컬 개발 환경 |
+| 분류               | 기술             | 용도       |
+|------------------|----------------|----------|
+| Build Tool       | Gradle         | 의존성 관리   |
+| Containerization | Docker         | 컨테이너화    |
+| Orchestration    | Docker Compose | 로컬 개발 환경 |
 
 ### Testing
 
-| 분류 | 기술 | 용도 |
-|------|------|------|
-| Unit Test | JUnit 5 | 단위 테스트 |
-| Mocking | Mockito | Mock 객체 생성 |
-| Integration Test | Testcontainers | 통합 테스트 |
-| Assertion | AssertJ | 가독성 높은 단언문 |
+| 분류               | 기술             | 용도         |
+|------------------|----------------|------------|
+| Unit Test        | JUnit 5        | 단위 테스트     |
+| Mocking          | Mockito        | Mock 객체 생성 |
+| Integration Test | Testcontainers | 통합 테스트     |
+| Assertion        | AssertJ        | 가독성 높은 단언문 |
 
 ---
 
@@ -1359,11 +1362,13 @@ Payment와 Refund 객체를 생성자가 아닌 Factory Method로만 생성하�
 
 **왜 Hexagonal Architecture를 선택했나?**
 
-MSA 환경에서 외부 서비스(예약, Toss)와의 통합이 빈번합니다. Hexagonal Architecture는 이러한 외부 의존성을 Port로 추상화하여 변경에 유연하게 대응할 수 있습니다. 예를 들어, Toss Payments를 다른 PG사로 교체할 때 Adapter만 변경하면 됩니다.
+MSA 환경에서 외부 서비스(예약, Toss)와의 통합이 빈번합니다. Hexagonal Architecture는 이러한 외부 의존성을 Port로 추상화하여 변경에 유연하게 대응할 수 있습니다. 예를 들어, Toss
+Payments를 다른 PG사로 교체할 때 Adapter만 변경하면 됩니다.
 
 **왜 Outbox Pattern을 사용했나?**
 
-Two-Phase Commit이나 Saga Pattern보다 구현이 단순하면서도 At-least-once 전달을 보장합니다. 금융 도메인에서는 이벤트 유실이 치명적이므로 약간의 복잡도 증가는 감수할 만한 가치가 있습니다.
+Two-Phase Commit이나 Saga Pattern보다 구현이 단순하면서도 At-least-once 전달을 보장합니다. 금융 도메인에서는 이벤트 유실이 치명적이므로 약간의 복잡도 증가는 감수할 만한 가치가
+있습니다.
 
 **왜 동기 호출로 예약 검증을 하나?**
 
@@ -1378,6 +1383,7 @@ Two-Phase Commit이나 Saga Pattern보다 구현이 단순하면서도 At-least-
 **1. Circuit Breaker 추가**
 
 예약 서비스 장애 시 빠른 실패 처리를 위해 Resilience4j Circuit Breaker 도입
+
 ```java
 @CircuitBreaker(name = "reservation-service", fallbackMethod = "reservationFallback")
 public ReservationInfo getReservation(String reservationId) {
@@ -1388,6 +1394,7 @@ public ReservationInfo getReservation(String reservationId) {
 **2. 멱등성 키 만료 정책**
 
 오래된 멱등성 키를 정리하여 DB 용량 관리
+
 ```sql
 DELETE FROM payments
 WHERE idempotency_key IS NOT NULL
@@ -1405,6 +1412,7 @@ Toss API 호출 시 적절한 타임아웃으로 무한 대기 방지
 **1. 결제 재시도 메커니즘**
 
 네트워크 일시 장애 시 자동 재시도
+
 ```java
 @Retryable(
     value = TossApiException.class,
@@ -1435,6 +1443,7 @@ public TossPaymentResponse approve(Payment payment) {
 **2. 다중 PG사 지원**
 
 Toss 외 다른 PG사(카카오페이, 네이버페이) 추가 지원
+
 ```java
 public interface PaymentGateway {
     PaymentResponse approve(Payment payment);
