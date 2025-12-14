@@ -11,21 +11,21 @@ import java.util.Optional;
 @Repository
 @RequiredArgsConstructor
 public class RefundRepositoryAdapter implements RefundRepository {
-
-    private final RefundJpaRepository jpaRepository;
-
-    @Override
-    public Refund save(Refund refund) {
-        return jpaRepository.save(refund);
-    }
-
-    @Override
-    public Optional<Refund> findById(String refundId) {
-        return jpaRepository.findById(refundId);
-    }
-
-    @Override
-    public List<Refund> findByPaymentId(String paymentId) {
-        return jpaRepository.findByPaymentId(paymentId);
-    }
+	
+	private final RefundJpaRepository jpaRepository;
+	
+	@Override
+	public Refund save(Refund refund) {
+		return jpaRepository.save(refund);
+	}
+	
+	@Override
+	public Optional<Refund> findById(String refundId) {
+		return jpaRepository.findById(refundId);
+	}
+	
+	@Override
+	public List<Refund> findByPaymentId(String paymentId) {
+		return jpaRepository.findByPaymentId(paymentId);
+	}
 }
