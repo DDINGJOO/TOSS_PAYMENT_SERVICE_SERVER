@@ -31,6 +31,13 @@ PaymentException extends CustomException {
 				"Payment not found by orderId: " + orderId
 		);
 	}
+
+	public static PaymentException notFoundByReservationId(String reservationId) {
+		return new PaymentException(
+				ErrorCode.PAYMENT_NOT_FOUND,
+				"Payment not found by reservationId: " + reservationId
+		);
+	}
 	
 	public static PaymentException alreadyCompleted(String paymentId) {
 		return new PaymentException(

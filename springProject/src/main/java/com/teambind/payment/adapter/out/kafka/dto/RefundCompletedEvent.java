@@ -3,36 +3,31 @@ package com.teambind.payment.adapter.out.kafka.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.teambind.payment.domain.Payment;
 import com.teambind.payment.domain.Refund;
 
 import java.time.LocalDateTime;
 
 public record RefundCompletedEvent(
-		// 환불 ID
+		String topic,
+		String eventType,
 		String refundId,
-		
-		// 결제 ID
 		String paymentId,
-		
-		// 예약 ID
 		String reservationId,
-		
-		// 원래 결제 금액
 		Long originalAmount,
-		
-		// 환불 금액
 		Long refundAmount,
-		
-		// 환불 사유
 		String reason,
-		
-		// 환불 완료 시각
 		@JsonSerialize(using = LocalDateTimeSerializer.class)
 		@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
 		LocalDateTime completedAt
 ) {
+	private static final String TOPIC = "refund-completed";
+	private static final String EVENT_TYPE = "RefundCompleted";
+
 	public static RefundCompletedEvent from(Refund refund, String reservationId) {
 		return new RefundCompletedEvent(
+				TOPIC,
+				EVENT_TYPE,
 				refund.getRefundId(),
 				refund.getPaymentId(),
 				reservationId,
@@ -40,6 +35,21 @@ public record RefundCompletedEvent(
 				refund.getRefundAmount().getValue().longValue(),
 				refund.getReason(),
 				refund.getCompletedAt()
+		);
+	}
+
+	public static RefundCompletedEvent fromPaymentCancel(Payment payment, String reason) {
+		Long amount = payment.getAmount().getValue().longValue();
+		return new RefundCompletedEvent(
+				TOPIC,
+				EVENT_TYPE,
+				null,
+				payment.getPaymentId(),
+				payment.getReservationId(),
+				amount,
+				amount,
+				reason,
+				LocalDateTime.now()
 		);
 	}
 }

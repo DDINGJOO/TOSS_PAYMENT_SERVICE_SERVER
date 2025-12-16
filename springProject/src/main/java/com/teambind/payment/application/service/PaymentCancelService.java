@@ -1,6 +1,6 @@
 package com.teambind.payment.application.service;
 
-import com.teambind.payment.adapter.out.kafka.dto.PaymentCancelledEvent;
+import com.teambind.payment.adapter.out.kafka.dto.RefundCompletedEvent;
 import com.teambind.payment.adapter.out.toss.dto.TossRefundRequest;
 import com.teambind.payment.adapter.out.toss.dto.TossRefundResponse;
 import com.teambind.payment.application.port.out.PaymentRepository;
@@ -17,42 +17,55 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentCancelService {
-	
+
+	private static final String DEFAULT_CANCEL_REASON = "사용자 취소 요청";
+
 	private final PaymentRepository paymentRepository;
 	private final TossRefundClient tossRefundClient;
 	private final PaymentEventPublisher paymentEventPublisher;
-	
+
+	@Transactional
+	public Payment cancelPaymentByReservationId(String reservationId) {
+		log.info("결제 취소 시작 - reservationId: {}", reservationId);
+
+		Payment payment = paymentRepository.findByReservationId(reservationId)
+				.orElseThrow(() -> PaymentException.notFoundByReservationId(reservationId));
+
+		return cancelPaymentInternal(payment, DEFAULT_CANCEL_REASON);
+	}
+
 	@Transactional
 	public Payment cancelPayment(String paymentId, String reason) {
 		log.info("결제 취소 시작 - paymentId: {}, reason: {}", paymentId, reason);
-		
-		// 1. Payment 조회
+
 		Payment payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> PaymentException.notFound(paymentId));
-		
+
+		return cancelPaymentInternal(payment, reason);
+	}
+
+	private Payment cancelPaymentInternal(Payment payment, String reason) {
+		String paymentId = payment.getPaymentId();
+
 		try {
-			// 2. 토스 결제 취소 API 호출 (전액 취소)
-			TossRefundRequest request = new TossRefundRequest(
+			TossRefundRequest tossRequest = new TossRefundRequest(
 					reason,
 					payment.getAmount().getValue().longValue()
 			);
-			
-			TossRefundResponse response = tossRefundClient.cancelPayment(payment.getPaymentKey(), request);
-			
-			// 3. Payment 취소 처리
+
+			TossRefundResponse tossResponse = tossRefundClient.cancelPayment(payment.getPaymentKey(), tossRequest);
+
 			payment.cancel();
-			
 			Payment canceledPayment = paymentRepository.save(payment);
-			
+
 			log.info("결제 취소 완료 - paymentId: {}, transactionId: {}, status: {}",
-					canceledPayment.getPaymentId(), response.transactionId(), canceledPayment.getStatus());
-			
-			// 4. 결제 취소 이벤트 발행
-			PaymentCancelledEvent event = PaymentCancelledEvent.from(canceledPayment);
-			paymentEventPublisher.publishPaymentCancelledEvent(event);
-			
+					canceledPayment.getPaymentId(), tossResponse.transactionId(), canceledPayment.getStatus());
+
+			RefundCompletedEvent event = RefundCompletedEvent.fromPaymentCancel(canceledPayment, reason);
+			paymentEventPublisher.publishRefundCompletedEvent(event);
+
 			return canceledPayment;
-			
+
 		} catch (Exception e) {
 			log.error("결제 취소 실패 - paymentId: {}, error: {}", paymentId, e.getMessage(), e);
 			payment.fail("결제 취소 실패: " + e.getMessage());
